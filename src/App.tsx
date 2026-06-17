@@ -3,6 +3,7 @@ import { AlertCircle, CheckCircle2, Download, Loader2, Merge, RotateCcw } from "
 import { Dropzone } from "./components/Dropzone";
 import type { SelectedFile, Slot, UploadStatus } from "./types";
 import { filenameFromDisposition } from "./lib/format";
+import { apiUrl } from "./lib/api";
 
 export function App() {
   const [media1, setMedia1] = useState<SelectedFile | null>(null);
@@ -62,7 +63,7 @@ export function App() {
     form.append("media2", media2.file);
 
     try {
-      const response = await uploadWithProgress("/api/merge", form, setProgress);
+      const response = await uploadWithProgress(apiUrl("/api/merge"), form, setProgress);
 
       if (!response.ok) {
         const payload = await response.json().catch(() => null);
