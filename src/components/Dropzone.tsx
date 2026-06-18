@@ -1,7 +1,7 @@
 import { ChangeEvent, DragEvent, useId, useState } from "react";
 import { FileAudio, FileImage, FileVideo, Upload, X } from "lucide-react";
 import type { SelectedFile, Slot } from "../types";
-import { acceptFor, validateSelection } from "../lib/validation";
+import { acceptFor, maxFileSizeMb, validateSelection } from "../lib/validation";
 import { formatBytes } from "../lib/format";
 
 interface DropzoneProps {
@@ -83,6 +83,7 @@ function EmptyState({ slot }: { slot: Slot }) {
         <p className="mt-1 text-sm text-slate-600">
           {slot === "media1" ? "jpg, png, webp, mp4, mov, mkv, webm" : "mp3, wav, aac, m4a, ogg, mp4, mov, mkv, webm"}
         </p>
+        <p className="mt-1 text-sm text-slate-600">Max {maxFileSizeMb} MB</p>
       </div>
     </div>
   );

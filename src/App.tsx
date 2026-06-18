@@ -63,6 +63,7 @@ export function App() {
     form.append("media2", media2.file);
 
     try {
+      await assertBackendReachable();
       const response = await uploadWithProgress(apiUrl("/api/merge"), form, setProgress);
 
       if (!response.ok) {
@@ -202,7 +203,27 @@ function uploadWithProgress(
         })
       );
     };
-    xhr.onerror = () => reject(new Error("Network error while uploading files."));
+    xhr.onerror = () =>
+      reject(
+        new Error(
+          "Network error while uploading files. Check that the backend URL uses HTTPS and that backend CORS_ORIGIN exactly matches this frontend URL."
+        )
+      );
     xhr.send(body);
   });
+}
+
+async function assertBackendReachable(): Promise<void> {
+  try {
+    const response = await fetch(apiUrl("/api/health"));
+    if (!response.ok) {
+      throw new Error(`Backend health check returned ${response.status}.`);
+    }
+  } catch (error) {
+    throw new Error(
+      error instanceof Error
+        ? `Backend is not reachable: ${error.message}`
+        : "Backend is not reachable. Check VITE_API_BASE_URL."
+    );
+  }
 }
