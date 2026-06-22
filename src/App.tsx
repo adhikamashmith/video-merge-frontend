@@ -113,8 +113,8 @@ export function App() {
         </header>
 
         <div className="grid gap-5 lg:grid-cols-2">
-          <Dropzone slot="media1" label="Primary media" value={media1} onChange={(file, nextError) => setFile("media1", file, nextError)} />
-          <Dropzone slot="media2" label="Audio source" value={media2} onChange={(file, nextError) => setFile("media2", file, nextError)} />
+          <Dropzone slot="media1" label="Input 1: image or video" value={media1} onChange={(file, nextError) => setFile("media1", file, nextError)} />
+          <Dropzone slot="media2" label="Input 2: audio or video with audio" value={media2} onChange={(file, nextError) => setFile("media2", file, nextError)} />
         </div>
 
         <section className="rounded-lg border border-line bg-white p-4 shadow-soft">

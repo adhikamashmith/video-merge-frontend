@@ -81,7 +81,9 @@ function EmptyState({ slot }: { slot: Slot }) {
       <div>
         <p className="font-medium text-ink">Drop file or browse</p>
         <p className="mt-1 text-sm text-slate-600">
-          {slot === "media1" ? "jpg, png, webp, mp4, mov, mkv, webm" : "mp3, wav, aac, m4a, ogg, mp4, mov, mkv, webm"}
+          {slot === "media1"
+            ? "Image/video: jpg, png, webp, mp4, mov, mkv, webm"
+            : "Audio/video: mp3, wav, aac, m4a, ogg, mp4, mov, mkv, webm"}
         </p>
         <p className="mt-1 text-sm text-slate-600">Max {maxFileSizeMb} MB</p>
       </div>

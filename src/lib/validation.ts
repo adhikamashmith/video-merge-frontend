@@ -13,8 +13,8 @@ export function validateSelection(file: File, slot: "media1" | "media2"): string
 
   if (!allowed.has(extension)) {
     return slot === "media1"
-      ? "Primary media must be an image or video."
-      : "Audio source must be audio or video.";
+      ? "Input 1 must be an image or video."
+      : "Input 2 must be an audio file or a video file that contains audio.";
   }
 
   return null;

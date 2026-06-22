@@ -8,7 +8,7 @@ describe("file validation", () => {
   });
 
   it("rejects audio as primary media", () => {
-    expect(validateSelection(new File([""], "song.mp3"), "media1")).toBe("Primary media must be an image or video.");
+    expect(validateSelection(new File([""], "song.mp3"), "media1")).toBe("Input 1 must be an image or video.");
   });
 
   it("allows audio source audio and video formats", () => {
