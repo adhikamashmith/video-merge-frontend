@@ -6,7 +6,7 @@ import { filenameFromDisposition } from "./lib/format";
 import { apiUrl } from "./lib/api";
 
 export function App() {
-  const [media1, setMedia1] = useState<SelectedFile | null>(null);
+  const [media1, setMedia1] = useState<SelectedFile[]>([]);
   const [media2, setMedia2] = useState<SelectedFile | null>(null);
   const [status, setStatus] = useState<UploadStatus>("idle");
   const [progress, setProgress] = useState(0);
@@ -15,9 +15,9 @@ export function App() {
 
   useEffect(() => {
     return () => {
-      if (media1?.previewUrl) URL.revokeObjectURL(media1.previewUrl);
+      media1.forEach((item) => URL.revokeObjectURL(item.previewUrl));
     };
-  }, [media1?.previewUrl]);
+  }, [media1]);
 
   useEffect(() => {
     return () => {
@@ -31,35 +31,39 @@ export function App() {
     };
   }, [download?.url]);
 
-  const ready = useMemo(() => Boolean(media1 && media2 && status !== "uploading"), [media1, media2, status]);
+  const ready = useMemo(() => Boolean(media1.length > 0 && media2 && status !== "uploading"), [media1.length, media2, status]);
 
-  const setFile = (slot: Slot, file: File | null, validationError?: string) => {
+  const setFiles = (slot: Slot, files: File[] | null, validationError?: string) => {
     setError(validationError ?? null);
     setStatus("idle");
     setProgress(0);
     if (download) setDownload(null);
 
-    const setter = slot === "media1" ? setMedia1 : setMedia2;
-    setter(file ? { file, previewUrl: URL.createObjectURL(file) } : null);
+    if (slot === "media1") {
+      setMedia1(files?.map(toSelectedFile) ?? []);
+      return;
+    }
+
+    setMedia2(files?.[0] ? toSelectedFile(files[0]) : null);
   };
 
   const reset = () => {
-    setFile("media1", null);
-    setFile("media2", null);
+    setFiles("media1", null);
+    setFiles("media2", null);
     setError(null);
     setStatus("idle");
     setProgress(0);
   };
 
   const mergeMedia = async () => {
-    if (!media1 || !media2) return;
+    if (media1.length === 0 || !media2) return;
 
     setStatus("uploading");
     setError(null);
     setProgress(5);
 
     const form = new FormData();
-    form.append("media1", media1.file);
+    media1.forEach((item) => form.append("media1", item.file));
     form.append("media2", media2.file);
 
     try {
@@ -113,8 +117,19 @@ export function App() {
         </header>
 
         <div className="grid gap-5 lg:grid-cols-2">
-          <Dropzone slot="media1" label="Input 1: image or video" value={media1} onChange={(file, nextError) => setFile("media1", file, nextError)} />
-          <Dropzone slot="media2" label="Input 2: audio or video with audio" value={media2} onChange={(file, nextError) => setFile("media2", file, nextError)} />
+          <Dropzone
+            slot="media1"
+            label="Input 1: images or videos"
+            value={media1}
+            multiple
+            onChange={(files, nextError) => setFiles("media1", files, nextError)}
+          />
+          <Dropzone
+            slot="media2"
+            label="Input 2: audio or video with audio"
+            value={media2 ? [media2] : []}
+            onChange={(files, nextError) => setFiles("media2", files, nextError)}
+          />
         </div>
 
         <section className="rounded-lg border border-line bg-white p-4 shadow-soft">
@@ -138,6 +153,10 @@ export function App() {
       </div>
     </main>
   );
+}
+
+function toSelectedFile(file: File): SelectedFile {
+  return { file, previewUrl: URL.createObjectURL(file) };
 }
 
 function StatusLine({ status, error }: { status: UploadStatus; error: string | null }) {

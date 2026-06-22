@@ -7,32 +7,46 @@ import { formatBytes } from "../lib/format";
 interface DropzoneProps {
   slot: Slot;
   label: string;
-  value: SelectedFile | null;
-  onChange: (file: File | null, error?: string) => void;
+  value: SelectedFile[];
+  multiple?: boolean;
+  onChange: (files: File[] | null, error?: string) => void;
 }
 
-export function Dropzone({ slot, label, value, onChange }: DropzoneProps) {
+export function Dropzone({ slot, label, value, multiple = false, onChange }: DropzoneProps) {
   const inputId = useId();
   const [isDragging, setIsDragging] = useState(false);
 
-  const chooseFile = (file: File | undefined) => {
-    if (!file) return;
-    const error = validateSelection(file, slot);
+  const chooseFiles = (fileList: FileList | undefined | null) => {
+    const files = Array.from(fileList ?? []);
+    if (files.length === 0) return;
+
+    const selected = multiple ? files : files.slice(0, 1);
+    const invalid = selected
+      .map((file) => validateSelection(file, slot))
+      .find((message): message is string => Boolean(message));
+
+    if (invalid) {
+      onChange(null, invalid);
+      return;
+    }
+
+    const error = slot === "media1" && selected.length > 10 ? "Input 1 supports up to 10 files." : null;
     if (error) {
       onChange(null, error);
       return;
     }
-    onChange(file);
+
+    onChange(selected);
   };
 
   const onDrop = (event: DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
     setIsDragging(false);
-    chooseFile(event.dataTransfer.files[0]);
+    chooseFiles(event.dataTransfer.files);
   };
 
   const onInput = (event: ChangeEvent<HTMLInputElement>) => {
-    chooseFile(event.target.files?.[0]);
+    chooseFiles(event.target.files);
     event.target.value = "";
   };
 
@@ -43,7 +57,7 @@ export function Dropzone({ slot, label, value, onChange }: DropzoneProps) {
           {slot === "media1" ? <FileVideo className="h-5 w-5 text-accent" /> : <FileAudio className="h-5 w-5 text-coral" />}
           <h2 className="truncate text-base font-semibold text-ink">{label}</h2>
         </div>
-        {value ? (
+        {value.length > 0 ? (
           <button
             type="button"
             aria-label={`Remove ${label}`}
@@ -67,19 +81,20 @@ export function Dropzone({ slot, label, value, onChange }: DropzoneProps) {
           isDragging ? "bg-teal-50" : "bg-white hover:bg-panel"
         }`}
       >
-        <input id={inputId} className="sr-only" type="file" accept={acceptFor(slot)} onChange={onInput} />
-        {value ? <Preview selected={value} /> : <EmptyState slot={slot} />}
+        <input id={inputId} className="sr-only" type="file" accept={acceptFor(slot)} multiple={multiple} onChange={onInput} />
+        {value.length > 0 ? <PreviewList selected={value} /> : <EmptyState slot={slot} multiple={multiple} />}
       </label>
     </section>
   );
 }
 
-function EmptyState({ slot }: { slot: Slot }) {
+function EmptyState({ slot, multiple }: { slot: Slot; multiple: boolean }) {
   return (
     <div className="flex min-h-56 flex-col items-center justify-center gap-3 rounded-md border border-dashed border-slate-300 bg-panel px-4 text-center">
       <Upload className="h-8 w-8 text-slate-500" />
       <div>
         <p className="font-medium text-ink">Drop file or browse</p>
+        {multiple ? <p className="mt-1 text-sm text-slate-600">Select multiple files to build the visual sequence</p> : null}
         <p className="mt-1 text-sm text-slate-600">
           {slot === "media1"
             ? "Image/video: jpg, png, webp, mp4, mov, mkv, webm"
@@ -91,7 +106,17 @@ function EmptyState({ slot }: { slot: Slot }) {
   );
 }
 
-function Preview({ selected }: { selected: SelectedFile }) {
+function PreviewList({ selected }: { selected: SelectedFile[] }) {
+  return (
+    <div className="grid gap-4">
+      {selected.map((item, index) => (
+        <Preview key={`${item.file.name}-${item.file.size}-${index}`} selected={item} index={index} />
+      ))}
+    </div>
+  );
+}
+
+function Preview({ selected, index }: { selected: SelectedFile; index: number }) {
   const { file, previewUrl } = selected;
   const mime = file.type;
   const ext = file.name.split(".").pop()?.toLowerCase();
@@ -102,7 +127,7 @@ function Preview({ selected }: { selected: SelectedFile }) {
   return (
     <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
       <div className="min-w-0">
-        <p className="truncate font-semibold text-ink">{file.name}</p>
+        <p className="truncate font-semibold text-ink">{index + 1}. {file.name}</p>
         <p className="mt-1 text-sm text-slate-600">{formatBytes(file.size)}</p>
         <div className="mt-3 flex items-center gap-2 text-sm text-slate-700">
           {isImage ? <FileImage className="h-4 w-4" /> : isVideo ? <FileVideo className="h-4 w-4" /> : <FileAudio className="h-4 w-4" />}
